@@ -361,6 +361,27 @@ The objective of this project is to simplify software testing by combining stati
 
 ---
 
+
+## 📸 Screenshots
+
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Bug Detection
+![Bug Detection](screenshots/bug-detection.png)
+
+### Test Results
+![Test Results](screenshots/test-results.png)
+
+### AI Analysis
+![AI Analysis](screenshots/ai-analysis.png)
+
+### AI Fix
+![AI Fix](screenshots/ai-fix.png)
+
+### PDF Report
+![PDF Report](screenshots/pdf-report.png)
+
 ## 🔮 Future Enhancements
 
 * Support for additional programming languages
