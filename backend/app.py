@@ -14,6 +14,83 @@ from ai_analyzer import generate_ai_analysis, generate_ai_test_cases
 app = Flask(__name__)
 CORS(app)
 
+# =========================================================
+# FILE UPLOAD CONFIGURATION
+# =========================================================
+
+UPLOAD_FOLDER = os.path.join(
+    os.path.dirname(__file__),
+    "uploads"
+)
+
+ALLOWED_EXTENSIONS = {"py"}
+
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
+
+
+def allowed_file(filename):
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower()
+        in ALLOWED_EXTENSIONS
+    )
+
+
+# =========================================================
+# UPLOAD PYTHON FILE
+# =========================================================
+
+@app.route("/upload", methods=["POST"])
+def upload_python_file():
+
+    try:
+
+        if "file" not in request.files:
+            return jsonify({
+                "error": "No file uploaded."
+            }), 400
+
+        file = request.files["file"]
+
+        if file.filename == "":
+            return jsonify({
+                "error": "No file selected."
+            }), 400
+
+        if not allowed_file(file.filename):
+            return jsonify({
+                "error": "Only Python (.py) files are allowed."
+            }), 400
+
+        code = file.read().decode("utf-8")
+
+        if not code.strip():
+            return jsonify({
+                "error": "The uploaded Python file is empty."
+            }), 400
+
+        return jsonify({
+            "message": "Python file uploaded successfully.",
+            "filename": file.filename,
+            "code": code
+        })
+
+    except UnicodeDecodeError:
+
+        return jsonify({
+            "error": "Unable to read the file. Please upload a UTF-8 encoded Python file."
+        }), 400
+
+    except Exception as error:
+
+        print("❌ File upload error:", error)
+
+        return jsonify({
+            "error": str(error)
+        }), 500
 
 # =========================================================
 # MYSQL CONFIGURATION

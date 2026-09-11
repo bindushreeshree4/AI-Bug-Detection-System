@@ -85,45 +85,23 @@ def generate_report(data, filename):
     # =====================================================
     # GET DATA
     # =====================================================
+    source_code = data.get("code") or ""
 
-    source_code = data.get("code", "")
+    bugs = data.get("bugs") or []
 
-    bugs = data.get("bugs", [])
+    test_cases = data.get("test_cases") or []
 
-    test_cases = data.get(
-        "test_cases",
-        []
-    )
+    ai_test_cases = data.get("ai_test_cases") or ""
 
-    ai_test_cases = data.get(
-        "ai_test_cases",
-        ""
-    )
+    ai_analysis = data.get("ai_analysis") or []
 
-    ai_analysis = data.get(
-        "ai_analysis",
-        []
-    )
+    fixed_code = data.get("fixed_code") or ""
 
-    fixed_code = data.get(
-        "fixed_code",
-        ""
-    )
+    execution = data.get("execution") or {}
 
-    execution = data.get(
-        "execution",
-        {}
-    )
+    before_fix = data.get("before_fix") or {}
 
-    before_fix = data.get(
-        "before_fix",
-        {}
-    )
-
-    after_fix = data.get(
-        "after_fix",
-        {}
-    )
+    after_fix = data.get("after_fix") or {}
 
     # =====================================================
     # EXECUTION DATA

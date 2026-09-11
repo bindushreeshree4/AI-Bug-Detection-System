@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Chart as ChartJS,
@@ -58,6 +57,10 @@ function App() {
 
   const [beforeFix, setBeforeFix] = useState(null);
   const [afterFix, setAfterFix] = useState(null);
+
+  // Uploaded Python file
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const fileInputRef = useRef(null);
 
 
   // =========================================================
@@ -263,6 +266,60 @@ function App() {
 
 
   // =========================================================
+  // UPLOAD PYTHON FILE
+  // =========================================================
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".py")) {
+      alert("Please upload a Python (.py) file.");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const fileContent = e.target?.result;
+
+      if (typeof fileContent !== "string") {
+        alert("Unable to read the Python file.");
+        return;
+      }
+
+      setCode(fileContent);
+      setUploadedFileName(file.name);
+
+      // Clear old results because new code was uploaded
+      setBugs([]);
+      setTestCases([]);
+      setAiTestCases("");
+      setAiAnalysis([]);
+      setExecution(null);
+      setRetestResult(null);
+      setFixedCode("");
+      setBeforeFix(null);
+      setAfterFix(null);
+      setActiveFilter("ALL");
+    };
+
+    reader.onerror = () => {
+      alert("Unable to read the selected Python file.");
+    };
+
+    reader.readAsText(file);
+
+    // Allow uploading the same file again
+    event.target.value = "";
+  };
+
+
+  // =========================================================
   // ANALYZE CODE
   // =========================================================
 
@@ -326,10 +383,6 @@ function App() {
         data.execution || null;
 
 
-      // -----------------------------------------------------
-      // UPDATE ANALYSIS
-      // -----------------------------------------------------
-
       setBugs(
         detectedBugs
       );
@@ -354,10 +407,6 @@ function App() {
 
       setFixedCode("");
 
-
-      // -----------------------------------------------------
-      // BEFORE FIX
-      // -----------------------------------------------------
 
       setBeforeFix({
 
@@ -384,23 +433,9 @@ function App() {
       });
 
 
-      // -----------------------------------------------------
-      // CLEAR AFTER FIX
-      // -----------------------------------------------------
-
       setAfterFix(null);
 
-
-      // -----------------------------------------------------
-      // RESET FILTER
-      // -----------------------------------------------------
-
       setActiveFilter("ALL");
-
-
-      // -----------------------------------------------------
-      // REFRESH HISTORY
-      // -----------------------------------------------------
 
       await loadHistory();
 
@@ -429,6 +464,12 @@ function App() {
   const clearAll = () => {
 
     setCode("");
+
+    setUploadedFileName("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
 
     setBugs([]);
 
@@ -490,6 +531,7 @@ function App() {
       );
 
     }
+
   };
 
 
@@ -589,10 +631,6 @@ function App() {
       }
 
 
-      // -----------------------------------------------------
-      // RETEST VALUES
-      // -----------------------------------------------------
-
       const retestBugs =
         Array.isArray(data.bugs)
           ? data.bugs
@@ -615,19 +653,11 @@ function App() {
         };
 
 
-      // -----------------------------------------------------
-      // QUALITY SCORE
-      // -----------------------------------------------------
-
       const calculatedAfterQuality =
         calculateQualityScore(
           retestBugs
         );
 
-
-      // -----------------------------------------------------
-      // UPDATE DASHBOARD
-      // -----------------------------------------------------
 
       setBugs(
         retestBugs
@@ -647,10 +677,6 @@ function App() {
 
       });
 
-
-      // -----------------------------------------------------
-      // AFTER FIX
-      // -----------------------------------------------------
 
       setAfterFix({
 
@@ -675,18 +701,9 @@ function App() {
       });
 
 
-      // -----------------------------------------------------
-      // RESET FILTER
-      // -----------------------------------------------------
-
       setActiveFilter(
         "ALL"
       );
-
-
-      // -----------------------------------------------------
-      // REFRESH HISTORY
-      // -----------------------------------------------------
 
       await loadHistory();
 
@@ -798,10 +815,6 @@ function App() {
         return;
       }
 
-
-      // -----------------------------------------------------
-      // DOWNLOAD PDF
-      // -----------------------------------------------------
 
       const pdfResponse =
         await fetch(
@@ -1080,12 +1093,54 @@ function App() {
               </h2>
 
               <p>
-                Paste Python source code to
-                detect bugs and automatically
-                generate test cases.
+                Paste Python source code or upload
+                a Python file to detect bugs and
+                automatically generate test cases.
               </p>
 
             </div>
+
+          </div>
+
+
+          {/* =================================================
+              FILE UPLOAD
+          ================================================= */}
+
+          <div className="button-row">
+
+            <input
+              id="python-file-upload"
+              ref={fileInputRef}
+              type="file"
+              accept=".py,text/x-python,text/plain"
+              onChange={handleFileUpload}
+              disabled={loading}
+              style={{
+                display: "none"
+              }}
+            />
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+            >
+              📁 Upload Python File
+            </button>
+
+            {uploadedFileName && (
+              <span
+                style={{
+                  alignSelf: "center",
+                  fontSize: "14px",
+                  fontWeight: "500"
+                }}
+              >
+                📄 {uploadedFileName}
+              </span>
+            )}
 
           </div>
 
@@ -1096,9 +1151,15 @@ function App() {
 
             value={code}
 
-            onChange={(e) =>
-              setCode(e.target.value)
-            }
+            onChange={(e) => {
+
+              setCode(
+                e.target.value
+              );
+
+              setUploadedFileName("");
+
+            }}
 
             placeholder={`Paste Python code here...
 
@@ -1150,10 +1211,6 @@ def divide(a, b):
             Testing Dashboard
           </h2>
 
-
-          {/* =================================================
-              STATISTICS
-          ================================================= */}
 
           <div className="stats-grid">
 
@@ -1237,12 +1294,7 @@ def divide(a, b):
           </div>
 
 
-          {/* =================================================
-              CHARTS
-          ================================================= */}
-
           <div className="charts-grid">
-
 
             <div className="chart-card">
 
@@ -1250,18 +1302,14 @@ def divide(a, b):
                 Bug Severity Distribution
               </h3>
 
-
               <div className="chart-container">
 
                 <Pie
-
                   data={bugChartData}
-
                   options={{
                     responsive: true,
                     maintainAspectRatio: false
                   }}
-
                 />
 
               </div>
@@ -1275,37 +1323,22 @@ def divide(a, b):
                 Test Execution Results
               </h3>
 
-
               <div className="chart-container">
 
                 <Bar
-
                   data={testChartData}
-
                   options={{
-
                     responsive: true,
-
                     maintainAspectRatio: false,
-
                     scales: {
-
                       y: {
-
                         beginAtZero: true,
-
                         ticks: {
-
                           precision: 0
-
                         }
-
                       }
-
                     }
-
                   }}
-
                 />
 
               </div>
@@ -1315,12 +1348,7 @@ def divide(a, b):
           </div>
 
 
-          {/* =================================================
-              DETAILED METRICS
-          ================================================= */}
-
           <div className="metrics-grid">
-
 
             <div className="metric-card">
 
@@ -1454,10 +1482,6 @@ def divide(a, b):
           </div>
 
 
-          {/* =================================================
-              PDF BUTTON
-          ================================================= */}
-
           <div className="button-row">
 
             <button
@@ -1490,9 +1514,7 @@ def divide(a, b):
             Bug Severity Overview
           </h2>
 
-
           <div className="severity-grid">
-
 
             <div className="severity-box high">
 
@@ -1575,14 +1597,11 @@ def divide(a, b):
           <div className="progress-container">
 
             <div
-
               className="progress-bar"
-
               style={{
                 width:
                   `${qualityScore}%`
               }}
-
             ></div>
 
           </div>
@@ -2001,7 +2020,6 @@ def divide(a, b):
 
             <div className="metrics-grid">
 
-
               <div className="metric-card">
 
                 <h3>
@@ -2113,7 +2131,6 @@ def divide(a, b):
             <>
 
               <div className="comparison-table">
-
 
                 <div className="comparison-row header-row">
 
@@ -2415,60 +2432,46 @@ def divide(a, b):
 
             <div className="filter-buttons">
 
-
               <button
-
                 className={
                   activeFilter === "ALL"
                     ? "filter active"
                     : "filter"
                 }
-
                 onClick={() =>
                   setActiveFilter("ALL")
                 }
-
               >
                 All
-
               </button>
 
 
               <button
-
                 className={
                   activeFilter === "PASS"
                     ? "filter active"
                     : "filter"
                 }
-
                 onClick={() =>
                   setActiveFilter("PASS")
                 }
-
               >
                 Passed
-
               </button>
 
 
               <button
-
                 className={
                   activeFilter === "FAIL"
                     ? "filter active"
                     : "filter"
                 }
-
                 onClick={() =>
                   setActiveFilter("FAIL")
                 }
-
               >
                 Failed
-
               </button>
-
 
             </div>
 
@@ -2506,16 +2509,13 @@ def divide(a, b):
                 (result) => (
 
                   <div
-
                     className={`execution-item ${
                       result.status ===
                       "PASS"
                         ? "execution-pass"
                         : "execution-fail"
                     }`}
-
                     key={result.id}
-
                   >
 
                     <div>
@@ -2734,7 +2734,6 @@ def divide(a, b):
                   </p>
 
                 </div>
-
               </>
 
             ) : (
@@ -2778,8 +2777,9 @@ def divide(a, b):
                 </h2>
 
                 <p>
-                  Enter Python code above
-                  to begin software analysis.
+                  Enter Python code or upload
+                  a Python file above to begin
+                  software analysis.
                 </p>
 
               </div>

@@ -5,3 +5,4 @@ node_modules/
 reports/
 .DS_Store
 dist/
+uploads/
